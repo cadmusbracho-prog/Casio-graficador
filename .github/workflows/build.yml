@@ -13,14 +13,16 @@ jobs:
       - name: Descargar codigo
         uses: actions/checkout@v4
 
-      - name: Configurar repositorios y toolchain Casio
+      - name: Configurar repositorio de Planete Casio y dependencias
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build python3 python3-pip libpng-dev libusb-1.0-0-dev
-          # Descargar el toolchain sh-elf precompilado oficial
-          wget https://bintray.com/artifact/download/lephenixnoir/sh-elf/sh-elf-gcc-latest.tar.gz || true
-          # Instalar fxsdk directamente desde PyPI oficial
-          pip3 install fxsdk || pip3 install --break-system-packages fxsdk
+          sudo apt-get install -y software-properties-common wget gpg curl
+          # Agregar repositorio oficial de Planete Casio para Debian/Ubuntu
+          wget -qO - https://apt.planet-casio.com/pubkey.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/planet-casio.gpg
+          echo "deb https://apt.planet-casio.com/ubuntu jammy main" | sudo tee /etc/apt/sources.list.d/planet-casio.list
+          sudo apt-get update || true
+          # Instalar toolchain sh-elf y herramientas fxsdk
+          sudo apt-get install -y --allow-unauthenticated fxsdk sh-elf-gcc gint || true
 
       - name: Compilar Add-in
         run: |
@@ -33,4 +35,3 @@ jobs:
           path: |
             build*/*.g1a
             build*/*.g3a
-            *.g1a
