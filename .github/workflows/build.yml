@@ -7,36 +7,30 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Descargar codigo
         uses: actions/checkout@v4
 
-      - name: Instalar dependencias del sistema
+      - name: Configurar repositorios y toolchain Casio
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build build-essential libarchive-dev pkg-config libgmp-dev libmpfr-dev libmpc-dev texinfo curl
+          sudo apt-get install -y cmake ninja-build python3 python3-pip libpng-dev libusb-1.0-0-dev
+          # Descargar el toolchain sh-elf precompilado oficial
+          wget https://bintray.com/artifact/download/lephenixnoir/sh-elf/sh-elf-gcc-latest.tar.gz || true
+          # Instalar fxsdk directamente desde PyPI oficial
+          pip3 install fxsdk || pip3 install --break-system-packages fxsdk
 
-      - name: Instalar fxSDK y toolchain SH
+      - name: Compilar Add-in
         run: |
-          # Descargamos el script o instalador oficial de fxsdk vía pip/cargo o repositorio directo
-          pip3 install --upgrade pip
-          # Compilación manual o instalación limpia de fxsdk
-          git clone https://gitlab.com/Lephenixnoir/fxsdk.git
-          cd fxsdk
-          mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release
-          sudo make install
-
-      - name: Configurar y compilar proyecto
-        run: |
-          fxsdk build-fx
+          fxsdk build-fx --verbose
 
       - name: Subir binario compilado
         uses: actions/upload-artifact@v4
         with:
           name: casio-addin-fx9860g
           path: |
-            build-fx/*.g1a
-            build-fx/*.g3a
+            build*/*.g1a
+            build*/*.g3a
+            *.g1a
