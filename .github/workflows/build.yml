@@ -7,26 +7,34 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
 
     steps:
+      - name: Actualizar sistema e instalar base
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm base-devel git cmake ninja python
+
       - name: Descargar codigo
         uses: actions/checkout@v4
 
-      - name: Configurar repositorio de Planete Casio y dependencias
+      - name: Configurar repositorio Casio en Arch
         run: |
-          sudo apt-get update
-          sudo apt-get install -y software-properties-common wget gpg curl
-          # Agregar repositorio oficial de Planete Casio para Debian/Ubuntu
-          wget -qO - https://apt.planet-casio.com/pubkey.gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/planet-casio.gpg
-          echo "deb https://apt.planet-casio.com/ubuntu jammy main" | sudo tee /etc/apt/sources.list.d/planet-casio.list
-          sudo apt-get update || true
-          # Instalar toolchain sh-elf y herramientas fxsdk
-          sudo apt-get install -y --allow-unauthenticated fxsdk sh-elf-gcc gint || true
+          # Agregar clave y repositorio binario de Lephenixnoir en Arch Linux
+          pacman-key --recv-keys 49791EB0417937A5 || pacman-key --recv-keys --keyserver keyserver.ubuntu.com 49791EB0417937A5 || true
+          pacman-key --lsign-key 49791EB0417937A5 || true
+          cat << 'EOF' >> /etc/pacman.conf
+          [casio]
+          SigLevel = Never
+          Server = https://casio.lephenixnoir.net/archlinux/$arch
+          EOF
+          pacman -Sy --noconfirm sh-elf-gcc sh-elf-binutils fxsdk gint
 
       - name: Compilar Add-in
         run: |
-          fxsdk build-fx --verbose
+          fxsdk build-fx
 
       - name: Subir binario compilado
         uses: actions/upload-artifact@v4
