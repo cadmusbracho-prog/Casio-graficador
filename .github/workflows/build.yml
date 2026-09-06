@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/lephenixnoir/fxsdk:latest
+      image: lephenixnoir/fxsdk:latest
 
     steps:
       - name: Descargar codigo
